@@ -97,7 +97,7 @@ export const useRoute = (isAuth) => {
               <TouchableOpacity
                 style={{ width: 24, height: 24, marginLeft: 16 }}
                 onPress={() => {
-                  navigation.goBack();
+                  navigation.navigate("PostsScreen");
                 }}
               >
                 <AntDesign name="arrowleft" size={24} color="#212121" />
