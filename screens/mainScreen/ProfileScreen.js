@@ -18,18 +18,21 @@ const userPosts = [
     title: "Закат на Черном море",
     country: "Ukraine",
     image: require("../../assets/images/img-sunset.jpg"),
+    location: { latitude: 38.8951, longitude: -77.0364 },
   },
   {
     id: "2",
     title: "Лес",
     country: "Ukraine",
     image: require("../../assets/images/img-mountains.jpg"),
+    location: { latitude: 38.8951, longitude: -77.0364 },
   },
   {
     id: "3",
     title: "Лес",
     country: "Ukraine",
     image: require("../../assets/images/img-mountains.jpg"),
+    location: { latitude: 38.8951, longitude: -77.0364 },
   },
 ];
 

@@ -82,7 +82,7 @@ const CreatePostsScreen = ({ navigation, route }) => {
   };
 
   const handleOnSubmit = () => {
-    navigation.navigate("PostsScreen");
+    navigation.navigate("PostsScreen", { ...state, photo, location });
     reset();
   };
 

@@ -11,6 +11,9 @@ const PostsScreen = ({ navigation, route }) => {
       title: "Закат на Черном море",
       country: "Ukraine",
       image: require("../../assets/images/img-sunset.jpg"),
+      location: route.params
+        ? route.params.location
+        : { latitude: 38.8951, longitude: -77.0364 },
     },
   ];
 
