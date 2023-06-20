@@ -12,11 +12,6 @@ import {
   Dimensions,
 } from "react-native";
 
-import * as Font from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-
-SplashScreen.preventAutoHideAsync();
-
 const initialState = {
   email: "",
   password: "",
@@ -26,24 +21,7 @@ export default function LoginScreen({ navigation }) {
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [state, setState] = useState(initialState);
   const [isShowPassword, setIsShowPassword] = useState(true);
-  const [isReady, setIsReady] = useState(false);
   const [isFocused, setIsFocused] = useState("");
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        await Font.loadAsync({
-          RobotoMedium: require("../../assets/fonts/Roboto-Medium.ttf"),
-        });
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-      }
-    }
-
-    prepare();
-  }, []);
 
   useEffect(() => {
     const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
@@ -54,16 +32,6 @@ export default function LoginScreen({ navigation }) {
       hideSubscription.remove();
     };
   }, []);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (isReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [isReady]);
-
-  if (!isReady) {
-    return null;
-  }
 
   const handleOnSubmit = () => {
     console.log(state);
@@ -92,7 +60,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={keyboardHide}>
+    <TouchableWithoutFeedback>
       <View style={styles.container}>
         <ImageBackground
           resizeMode="cover"
@@ -103,7 +71,7 @@ export default function LoginScreen({ navigation }) {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ flex: 1, justifyContent: "flex-end" }}
           >
-            <View onLayout={onLayoutRootView} style={styles.registerBox}>
+            <View style={styles.registerBox}>
               <Text style={styles.registerTitle}>Войти</Text>
               <View style={styles.form}>
                 <View style={styles.inputBox}>

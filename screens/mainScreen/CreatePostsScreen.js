@@ -9,14 +9,19 @@ import {
   Text,
   Keyboard,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
   Dimensions,
 } from "react-native";
 
-import * as Font from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
+import * as Location from "expo-location";
+import { Camera, CameraType } from "expo-camera";
+import * as MediaLibrary from "expo-media-library";
+import { useHeaderHeight } from "@react-navigation/elements";
+import getCoordinateAddress from "../../services/api/convertAddress";
 
 import { AntDesign } from "@expo/vector-icons";
 import { SimpleLineIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 
 const { height, width } = Dimensions.get("window");
 const itemWidth = width - 32;
@@ -26,84 +31,127 @@ const initialState = {
   location: "",
 };
 
-const CreatePostsScreen = ({ navigation }) => {
+const CreatePostsScreen = ({ navigation, route }) => {
   const [state, setState] = useState(initialState);
-  const [isReady, setIsReady] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [photo, setPhoto] = useState(null);
+  const [status, requestPermission] = Camera.useCameraPermissions();
+  const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
   useEffect(() => {
-    async function prepare() {
-      try {
-        await Font.loadAsync({
-          RobotoRegular: require("../../assets/fonts/Roboto-Regular.ttf"),
-          RobotoMedium: require("../../assets/fonts/Roboto-Medium.ttf"),
-          RobotoBold: require("../../assets/fonts/Roboto-Bold.ttf"),
-        });
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-      }
-    }
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setIsShowKeyboard(false);
+    });
 
-    prepare();
+    return () => {
+      hideSubscription.remove();
+    };
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (isReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [isReady]);
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+      }
 
-  if (!isReady) {
-    return null;
-  }
+      let location = await Location.getCurrentPositionAsync({});
+      const coords = {
+        longitude: location.coords.longitude,
+        latitude: location.coords.latitude,
+      };
+      setLocation(coords);
+    })();
+  }, []);
+
+  const takePhoto = async () => {
+    const { uri } = await camera.takePictureAsync();
+    setPhoto(uri);
+    getAddress();
+  };
+
+  const getAddress = async () => {
+    const address = await getCoordinateAddress(location);
+    const country = address.split(",").splice(-1).join("");
+
+    setState((prevState) => ({
+      ...prevState,
+      location: country,
+    }));
+  };
 
   const handleOnSubmit = () => {
-    console.log(state);
+    navigation.navigate("PostsScreen");
     reset();
   };
 
   const reset = () => {
+    setPhoto(false);
     setState(initialState);
   };
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View onLayout={onLayoutRootView} style={styles.container}>
-        <Image style={styles.image} />
-        <Text style={styles.actionTitle}>Загрузите фото</Text>
-        <View>
-          <View>
-            <TextInput
-              style={{ ...styles.input, marginBottom: 16 }}
-              onChangeText={(value) =>
-                setState((prevState) => ({ ...prevState, name: value }))
-              }
-              value={state.name}
-              placeholder="Название..."
-            />
-            <View style={{ position: "relative" }}>
-              <TextInput
-                style={{ ...styles.input, marginBottom: 32, paddingLeft: 28 }}
-                onChangeText={(value) =>
-                  setState((prevState) => ({ ...prevState, location: value }))
-                }
-                value={state.location}
-                placeholder="Местность..."
-              />
+      <View style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={
+            isShowKeyboard && {
+              flex: 1,
+              width: itemWidth,
+              position: "absolute",
+              right: 16,
+              left: 16,
+              top: 0,
+            }
+          }
+        >
+          <View style={styles.cameraBox}>
+            <Camera
+              type={CameraType.back}
+              style={styles.camera}
+              ref={setCamera}
+            >
               <TouchableOpacity
-                style={styles.locationBtn}
-                onPress={() => {
-                  navigation.navigate("Map");
-                }}
+                onPress={takePhoto}
+                style={styles.snapContainer}
               >
-                <SimpleLineIcons
-                  name="location-pin"
-                  size={24}
-                  color="#BDBDBD"
-                />
+                <FontAwesome name="camera" size={24} color="#BDBDBD" />
               </TouchableOpacity>
-            </View>
+              {photo && <Image style={styles.image} source={{ uri: photo }} />}
+            </Camera>
+          </View>
+          <Text style={styles.actionTitle}>Загрузите фото</Text>
+          <TextInput
+            style={{ ...styles.input, marginBottom: 16 }}
+            onChangeText={(value) =>
+              setState((prevState) => ({ ...prevState, name: value }))
+            }
+            value={state.name}
+            placeholder="Название..."
+            onFocus={() => setIsShowKeyboard(true)}
+          />
+          <View style={{ position: "relative" }}>
+            <TextInput
+              style={{ ...styles.input, marginBottom: 32, paddingLeft: 28 }}
+              onChangeText={(value) =>
+                setState((prevState) => ({ ...prevState, location: value }))
+              }
+              value={state.location}
+              placeholder="Местность..."
+              onFocus={() => setIsShowKeyboard(true)}
+            />
+            <TouchableOpacity
+              style={styles.locationBtn}
+              onPress={() => {
+                navigation.navigate("Map", { location });
+              }}
+            >
+              <SimpleLineIcons name="location-pin" size={24} color="#BDBDBD" />
+            </TouchableOpacity>
+          </View>
+          {!isShowKeyboard && (
             <TouchableOpacity
               style={{
                 ...styles.button,
@@ -122,16 +170,15 @@ const CreatePostsScreen = ({ navigation }) => {
                 Опубликовать
               </Text>
             </TouchableOpacity>
+          )}
+        </KeyboardAvoidingView>
+        {!isShowKeyboard && (
+          <View style={styles.bottomView}>
+            <TouchableOpacity style={styles.deleteBtn} onPress={reset}>
+              <AntDesign name="delete" size={24} color="#BDBDBD" />
+            </TouchableOpacity>
           </View>
-        </View>
-        <View style={styles.bottomView}>
-          <TouchableOpacity
-            style={styles.deleteBtn}
-            // onPress={() => }
-          >
-            <AntDesign name="delete" size={24} color="#BDBDBD" />
-          </TouchableOpacity>
-        </View>
+        )}
       </View>
     </TouchableWithoutFeedback>
   );
@@ -141,19 +188,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: "relative",
-
     paddingHorizontal: 16,
     paddingTop: 32,
     backgroundColor: "#FFFFFF",
   },
+  cameraBox: {
+    width: itemWidth,
+    height: 240,
+    borderRadius: 8,
+    backgroundColor: "#F6F6F6",
+    // borderWidth: 1,
+    borderColor: "#E8E8E8",
+    marginBottom: 8,
+    overflow: "hidden",
+  },
+  camera: { flex: 1 },
   image: {
     width: itemWidth,
     height: 240,
     borderRadius: 8,
     backgroundColor: "#F6F6F6",
-    borderWidth: 1,
+    // borderWidth: 1,
     borderColor: "#E8E8E8",
     marginBottom: 8,
+  },
+  snapContainer: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: (itemWidth - 60) / 2,
+    right: (itemWidth - 60) / 2,
+    zIndex: 10,
+    marginTop: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 60,
+    height: 60,
+    borderRadius: 50,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   actionTitle: {
     fontFamily: "RobotoRegular",

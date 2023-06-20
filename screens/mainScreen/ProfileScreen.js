@@ -6,21 +6,11 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
-  SafeAreaView,
   FlatList,
   Dimensions,
 } from "react-native";
 
-import * as Font from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-
-import { Fontisto } from "@expo/vector-icons";
-import { AntDesign } from "@expo/vector-icons";
-import { SimpleLineIcons } from "@expo/vector-icons";
-
-const { height, width } = Dimensions.get("window");
-const itemWidth = width - 32;
-const itemHeight = height - 147;
+import Item from "../../components/Item";
 
 const userPosts = [
   {
@@ -43,39 +33,9 @@ const userPosts = [
   },
 ];
 
-const ProfileScreen = ({ navigation }) => {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        await Font.loadAsync({
-          RobotoRegular: require("../../assets/fonts/Roboto-Regular.ttf"),
-          RobotoMedium: require("../../assets/fonts/Roboto-Medium.ttf"),
-          RobotoBold: require("../../assets/fonts/Roboto-Bold.ttf"),
-        });
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-      }
-    }
-
-    prepare();
-  }, []);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (isReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [isReady]);
-
-  if (!isReady) {
-    return null;
-  }
-
+const ProfileScreen = ({ navigation, route }) => {
   return (
-    <View onLayout={onLayoutRootView} style={styles.container}>
+    <View style={styles.container}>
       <ImageBackground
         resizeMode="cover"
         style={styles.image}
@@ -106,61 +66,11 @@ const ProfileScreen = ({ navigation }) => {
           <FlatList
             data={userPosts}
             renderItem={({ item }) => (
-              <View style={styles.postItem}>
-                <Image style={styles.postImage} source={item.image} />
-                <Text style={styles.title}>{item.title}</Text>
-                <View style={styles.postTabContainer}>
-                  <View style={styles.tabBox}>
-                    <View style={styles.commentBox}>
-                      <TouchableOpacity
-                        style={styles.commentBtn}
-                        onPress={() => {
-                          navigation.navigate("Comments");
-                        }}
-                      >
-                        <Fontisto
-                          name="comment"
-                          style={{ marginRight: 6 }}
-                          size={24}
-                          fill="#FF6C00"
-                          color="#FF6C00"
-                        />
-                      </TouchableOpacity>
-                      <Text style={styles.tabText}>3</Text>
-                    </View>
-                    <View style={styles.likeBox}>
-                      <AntDesign
-                        name="like2"
-                        style={{ marginRight: 6 }}
-                        size={24}
-                        color="#FF6C00"
-                      />
-                      <Text style={styles.tabText}>200</Text>
-                    </View>
-                  </View>
-                  <View style={styles.locationBox}>
-                    <TouchableOpacity
-                      style={styles.locationBtn}
-                      onPress={() => {}}
-                    >
-                      <SimpleLineIcons
-                        name="location-pin"
-                        style={{ marginRight: 6 }}
-                        size={24}
-                        color="#BDBDBD"
-                      />
-                    </TouchableOpacity>
-                    <Text
-                      style={{
-                        ...styles.tabText,
-                        textDecorationLine: "underline",
-                      }}
-                    >
-                      {item.country}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              <Item
+                item={item}
+                navigate={navigation.navigate}
+                anchor={route.name}
+              />
             )}
             keyExtractor={(item) => item.id}
           />
@@ -237,29 +147,6 @@ const styles = StyleSheet.create({
     color: "#212121",
     marginBottom: 32,
   },
-  postItem: { marginBottom: 32 },
-  postImage: {
-    width: "100%",
-    height: 240,
-    borderRadius: 8,
-    backgroundColor: "#F6F6F6",
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
-    marginBottom: 8,
-  },
-  postTabContainer: { flexDirection: "row", justifyContent: "space-between" },
-  tabBox: { flexDirection: "row" },
-  commentBox: { flexDirection: "row", marginRight: 24, alignItems: "center" },
-  title: { marginBottom: 8 },
-  commentBtn: {},
-  tabText: {
-    fontFamily: "RobotoRegular",
-    fontSize: 16,
-    lineHeight: 19,
-  },
-  locationBox: { flexDirection: "row", alignItems: "center" },
-  likeBox: { flexDirection: "row", alignItems: "center" },
-  locationBtn: {},
 });
 
 export default ProfileScreen;

@@ -1,49 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 
-import {
-  Button,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Text,
-} from "react-native";
-import * as Font from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
+import { FlatList, Image, StyleSheet, View, Text } from "react-native";
 
-const PostsScreen = () => {
-  const [isReady, setIsReady] = useState(false);
+import Item from "../../components/Item";
 
-  useEffect(() => {
-    async function prepare() {
-      try {
-        await Font.loadAsync({
-          RobotoRegular: require("../../assets/fonts/Roboto-Regular.ttf"),
-          RobotoMedium: require("../../assets/fonts/Roboto-Medium.ttf"),
-          RobotoBold: require("../../assets/fonts/Roboto-Bold.ttf"),
-        });
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-      }
-    }
-
-    prepare();
-  }, []);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (isReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [isReady]);
-
-  if (!isReady) {
-    return null;
-  }
+const PostsScreen = ({ navigation, route }) => {
+  const userPosts = [
+    {
+      id: "1",
+      title: "Закат на Черном море",
+      country: "Ukraine",
+      image: require("../../assets/images/img-sunset.jpg"),
+    },
+  ];
 
   return (
-    <View onLayout={onLayoutRootView} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.userBox}>
         <Image
           style={styles.image}
@@ -54,6 +26,17 @@ const PostsScreen = () => {
           <Text style={styles.emailTitle}>email@example.com</Text>
         </View>
       </View>
+      <FlatList
+        data={userPosts}
+        renderItem={({ item }) => (
+          <Item
+            item={item}
+            navigate={navigation.navigate}
+            anchor={route.name}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+      />
     </View>
   );
 };
@@ -65,7 +48,12 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     backgroundColor: "#FFFFFF",
   },
-  userBox: { flexDirection: "row", width: 171, alignItems: "center" },
+  userBox: {
+    flexDirection: "row",
+    width: 171,
+    alignItems: "center",
+    marginBottom: 32,
+  },
   image: { width: 60, height: 60, borderRadius: 16 },
   titleBox: { marginLeft: 8 },
   nameTitle: {
